@@ -6,7 +6,7 @@ Node::Node(void *data, Node *prox, Node *anterior){
     _anterior = anterior;
 }
 
-Node::~Node() = default; 
+Node::~Node() = default;
 
 //getters
 void* Node::getData() const{

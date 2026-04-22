@@ -7,7 +7,14 @@ Cliente::Cliente(int id){
     _numacoes = 0;
 }
 
-Cliente::~Cliente() = default; 
+Cliente::~Cliente() {
+    Node *atual = _primeiraAcao;
+    while (atual != nullptr) {
+        Node *prox = atual->getProx();
+        delete atual;
+        atual = prox;
+    }
+}
 
 //getters
 

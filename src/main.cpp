@@ -8,12 +8,14 @@
 #include "../include/Cliente.hpp"
 #include "../include/Node.hpp"
 
+//struct para relacionar a acao com o seu id e pontuacao para a ordenacao
 struct RankItem {
     int index;
     double pontuacao;
     int id;
 };
 
+//merge para ordenar duas subpartes do ranking
 void merge(RankItem arr[], int const inicio, int const meio, int const fim) {
     int const n1 = meio - inicio + 1;
     int const n2 = fim - meio;
@@ -21,14 +23,16 @@ void merge(RankItem arr[], int const inicio, int const meio, int const fim) {
     RankItem* array_esquerdo = new RankItem[n1];
     RankItem* array_direito = new RankItem[n2];
 
-    for (int i = 0; i < n1; i++)
+    for (int i = 0; i < n1; i++){
         array_esquerdo[i] = arr[inicio + i];
-    for (int j = 0; j < n2; j++)
+    }
+    for (int j = 0; j < n2; j++){
         array_direito[j] = arr[meio + 1 + j];
+    }
 
     int i = 0, j = 0, k = inicio;
 
-    while (i < n1 && j < n2) {
+    while (i < n1 && j < n2){
         if (array_esquerdo[i].pontuacao > array_direito[j].pontuacao || 
            (array_esquerdo[i].pontuacao == array_direito[j].pontuacao && array_esquerdo[i].id < array_direito[j].id)) {
             arr[k] = array_esquerdo[i];
@@ -40,13 +44,13 @@ void merge(RankItem arr[], int const inicio, int const meio, int const fim) {
         k++;
     }
 
-    while (i < n1) {
+    while (i < n1){
         arr[k] = array_esquerdo[i];
         i++;
         k++;
     }
 
-    while (j < n2) {
+    while (j < n2){
         arr[k] = array_direito[j];
         j++;
         k++;
@@ -56,7 +60,8 @@ void merge(RankItem arr[], int const inicio, int const meio, int const fim) {
     delete[] array_direito;
 }
 
-void mergeSort(RankItem arr[], int const inicio, int const fim) {
+//ordenacao do ranking de melhores e piores acoes
+void mergeSort(RankItem arr[], int const inicio, int const fim){
     if (inicio >= fim)
         return;
 
@@ -66,22 +71,19 @@ void mergeSort(RankItem arr[], int const inicio, int const fim) {
     merge(arr, inicio, meio, fim);
 }
 
-int main()
-{
+int main(){
     int lineCounter = 0;
     char funcao;
 
-    Node acoes = Node(nullptr, nullptr, nullptr);
+    Node acoes = Node(nullptr, nullptr, nullptr); //lista geral de acoes
     Node *ultima_acao_cadastrada = &acoes;
 
-    Node clientes = Node(nullptr, nullptr, nullptr);
+    Node clientes = Node(nullptr, nullptr, nullptr); //lista geral de acoes
     Node *ultimo_cliente_cadastrado = &clientes;
 
-    int numcotacoes; // numero de cotacoes que serao consideradas nas metricas
-    std::string param;
+    int numcotacoes; //numero de cotacoes que serao consideradas nas metricas
 
-    std::ifstream file("example.txt");
-    std::string line;
+    std::string line; //variavel usada para guardar a linha analisada
 
 
     while (std::getline(std::cin, line)){
@@ -217,6 +219,7 @@ int main()
             double *pontuacao_global = new double[qtd_acoes];
 
             m_node = acoes.getProx();
+            //a pontuacao global é zerada para calcular uma das metricas especificadas
             for (int i = 0; i < qtd_acoes; i++){
                 todas_acoes[i] = static_cast<Acao *>(m_node->getData());
                 pontuacao_global[i] = 0.0;
@@ -226,6 +229,7 @@ int main()
             for (int j = 0; j < qtd_metricas; j++){
                 RankItem *itens_global = new RankItem[qtd_acoes];
 
+                //laço para atribuir uma pontuacao para uma determinada metrica
                 for (int i = 0; i < qtd_acoes; i++){
                     itens_global[i].index = i;
                     itens_global[i].id = todas_acoes[i]->getId();
@@ -243,12 +247,14 @@ int main()
                     }
                 }
 
+                //ordenacao em relacao as pontuacoes
                 mergeSort(itens_global, 0, qtd_acoes - 1);
 
+                //a pontuação da metrica é somada a pontuação anterior da acao
                 for (int i = 0; i < qtd_acoes; i++){
                     int original_idx = itens_global[i].index;
-                    int pontos = qtd_acoes - i;
-                    pontuacao_global[original_idx] += (pontos * pesos[j]);
+                    int soma_pos = qtd_acoes - i;
+                    pontuacao_global[original_idx] += (soma_pos * pesos[j]);
                 }
 
                 delete[] itens_global;
@@ -322,5 +328,29 @@ int main()
             break;
         }
     }
-    file.close();
+
+    //limpeza das listas para evitar memory leak
+
+    //limpeza clientes
+    Node *atual_cliente = clientes.getProx();
+    while (atual_cliente != nullptr) {
+        Node *prox = atual_cliente->getProx();
+        
+        delete static_cast<Cliente*>(atual_cliente->getData());
+        
+        delete atual_cliente;
+        
+        atual_cliente = prox;
+    }
+
+    //limpeza acoes
+    Node *atual_acao = acoes.getProx();
+    while (atual_acao != nullptr) {
+        Node *prox = atual_acao->getProx();
+        
+        delete static_cast<Acao*>(atual_acao->getData());
+        delete atual_acao;
+        
+        atual_acao = prox;
+    }
 }

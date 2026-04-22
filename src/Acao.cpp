@@ -7,7 +7,19 @@ Acao::Acao(int id, Node *primeiraCotacao, Node *ultimacotacao){
     _numcotacoes = 0;
 }
 
-Acao::~Acao() = default; 
+Acao::~Acao() {
+    Node *atual = _primeiraCotacao;
+    while (atual != nullptr) {
+        Node *prox = atual->getProx();
+        
+        if (atual->getData() != nullptr) {
+            delete static_cast<double*>(atual->getData());
+        }
+        
+        delete atual;
+        atual = prox;
+    }
+}
 
 //getters
 int Acao::getId() const{
