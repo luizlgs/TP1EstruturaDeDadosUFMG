@@ -22,5 +22,6 @@ $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 
 clean:
 	rm -f $(OBJ_DIR)/*.o
+	rm -f $(BIN_DIR)/*.o
 
 .PHONY: all clean directories
