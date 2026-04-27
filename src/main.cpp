@@ -82,9 +82,9 @@ int main(){
     Node *ultimo_cliente_cadastrado = &clientes;
 
     int numcotacoes; //numero de cotacoes que serao consideradas nas metricas
+    bool m_processado = false; // Controle de robustez: Ordem de Processamento
 
     std::string line; //variavel usada para guardar a linha analisada
-
 
     while (std::getline(std::cin, line)){
         if (line.empty())
@@ -93,16 +93,26 @@ int main(){
         std::stringstream ss(line);
         ss >> funcao;
 
+        // Estratégia 4.1: Ordem de Processamento
+        if (funcao != 'M' && !m_processado) {
+            throw std::invalid_argument("A linha de metricas (M) deve ser processada antes de qualquer outra operacao.");
+        }
+
         switch (funcao){
 
         case 77:{ // M
             ss >> numcotacoes;
+            m_processado = true; // Confirma que M foi lido
             break;
         }
             //----------------------------------------------------------------------------------------------
         case 65:{ // A
             double id_acao;
             ss >> id_acao;
+            
+            // Estratégia 4.1: Integridade dos Identificadores
+            if (id_acao < 0) throw std::invalid_argument("ID de acao invalido.");
+            
             Acao *acao = new Acao(id_acao, nullptr, nullptr);
             Node *nova_acao = new Node(acao, nullptr, ultima_acao_cadastrada);
             ultima_acao_cadastrada->setProx(nova_acao);
@@ -115,6 +125,10 @@ int main(){
         case 85:{ // U
             int id_novo_cliente;
             ss >> id_novo_cliente;
+
+            // Estratégia 4.1: Integridade dos Identificadores
+            if (id_novo_cliente < 0) throw std::invalid_argument("ID de cliente invalido.");
+
             Cliente *cliente = new Cliente(id_novo_cliente);
             Node *novoCliente = new Node(cliente, nullptr, ultimo_cliente_cadastrado);
             ultimo_cliente_cadastrado->setProx(novoCliente);
@@ -130,6 +144,10 @@ int main(){
             double cotacao;
             ss >> id_procurado;
             ss >> cotacao;
+
+            // Estratégia 4.1: Dados Financeiros
+            if (cotacao <= 0) throw std::invalid_argument("Preco de cotacao deve ser um valor real positivo.");
+
             while (a != nullptr){
                 Acao *acao = static_cast<Acao *>(a->getData());
                 if (acao->getId() == id_procurado){
@@ -196,10 +214,35 @@ int main(){
             int id_consulta, id_cliente, num_acoes_retornadas, qtd_metricas;
             ss >> id_consulta >> id_cliente >> num_acoes_retornadas >> qtd_metricas;
 
-            std::string *metricas_nome = new std::string[qtd_metricas];
-            double *pesos = new double[qtd_metricas];
+            // Estratégia 4.3: Erros de Argumento
+            if (num_acoes_retornadas < 0) throw std::invalid_argument("Valor de n na consulta Q eh inconsistente.");
+
+            std::string *metricas_nome = nullptr;
+            double *pesos = nullptr;
+
+            // Estratégia 4.3: Falhas Estruturais (Tratamento de alocação de memória)
+            try {
+                metricas_nome = new std::string[qtd_metricas];
+                pesos = new double[qtd_metricas];
+            } catch (const std::bad_alloc& e) {
+                throw std::runtime_error("Falha na alocacao dinamica de memoria.");
+            }
+
             for (int i = 0; i < qtd_metricas; i++){
                 ss >> metricas_nome[i] >> pesos[i];
+                
+                // Estratégia 4.1: Dados Financeiros
+                if (pesos[i] <= 0) {
+                    delete[] metricas_nome; delete[] pesos;
+                    throw std::invalid_argument("O peso da metrica deve ser um valor real positivo.");
+                }
+
+                // Estratégia 4.3: Erros de Argumento
+                if (metricas_nome[i] != "RET" && metricas_nome[i] != "AVGRET" && 
+                    metricas_nome[i] != "STAB" && metricas_nome[i] != "CONS") {
+                    delete[] metricas_nome; delete[] pesos;
+                    throw std::invalid_argument("Consulta tenta utilizar metricas nao definidas previamente.");
+                }
             }
 
             int qtd_acoes = 0;
@@ -215,8 +258,16 @@ int main(){
                 break;
             }
 
-            Acao **todas_acoes = new Acao *[qtd_acoes];
-            double *pontuacao_global = new double[qtd_acoes];
+            Acao **todas_acoes = nullptr;
+            double *pontuacao_global = nullptr;
+
+            try {
+                todas_acoes = new Acao *[qtd_acoes];
+                pontuacao_global = new double[qtd_acoes];
+            } catch (const std::bad_alloc& e) {
+                delete[] metricas_nome; delete[] pesos;
+                throw std::runtime_error("Falha inesperada na alocacao dinamica de memoria.");
+            }
 
             m_node = acoes.getProx();
             //a pontuacao global é zerada para calcular uma das metricas especificadas
@@ -227,7 +278,14 @@ int main(){
             }
 
             for (int j = 0; j < qtd_metricas; j++){
-                RankItem *itens_global = new RankItem[qtd_acoes];
+                RankItem *itens_global = nullptr;
+                
+                try {
+                    itens_global = new RankItem[qtd_acoes];
+                } catch (const std::bad_alloc& e) {
+                    delete[] metricas_nome; delete[] pesos; delete[] todas_acoes; delete[] pontuacao_global;
+                    throw std::runtime_error("Falha inesperada na alocacao dinamica de memoria.");
+                }
 
                 //laço para atribuir uma pontuacao para uma determinada metrica
                 for (int i = 0; i < qtd_acoes; i++){
@@ -279,7 +337,15 @@ int main(){
                 }
 
                 if (num_acoes_carteira > 0){
-                    RankItem *array_carteira = new RankItem[num_acoes_carteira];
+                    RankItem *array_carteira = nullptr;
+                    
+                    try {
+                        array_carteira = new RankItem[num_acoes_carteira];
+                    } catch (const std::bad_alloc& e) {
+                        delete[] metricas_nome; delete[] pesos; delete[] todas_acoes; delete[] pontuacao_global;
+                        throw std::runtime_error("Falha inesperada na alocacao dinamica de memoria.");
+                    }
+
                     acao_node = cliente->getPrimeiraAcao();
                     int idx = 0;
                     while (acao_node != nullptr){
