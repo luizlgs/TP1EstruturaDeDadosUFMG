@@ -2,7 +2,7 @@ CC = g++
 CFLAGS = -std=c++11 -Wall -Iinclude
 
 SRC_DIR = src
-OBJ_DIR = include
+OBJ_DIR = obj
 BIN_DIR = bin
 
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
@@ -19,7 +19,6 @@ $(EXECUTABLE): $(OBJECTS)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	$(CC) $(CFLAGS) -c $< -o $@
-
 
 clean:
 	rm -f $(OBJ_DIR)/*.o
