@@ -49,6 +49,11 @@ double Acao::calcularRetornoElementar(int posicao){
 }
 
 void Acao::adicionarCotacao(double valor_cotacao){
+    // Estratégia 4.1: Dados Financeiros (Apenas reais positivos)
+    if(valor_cotacao <= 0){
+        throw std::invalid_argument("O valor da cotacao deve ser um numero real positivo.");
+    }
+
     double *val_cotacao = new double();
     *val_cotacao = std::abs(valor_cotacao);
 
@@ -134,4 +139,3 @@ double Acao::calcularCons(int qtd_cotacoes_consideradas){
     }
     return (1.0/(qtd_cotacoes_consideradas-1.0)) * cons;
 }
-
