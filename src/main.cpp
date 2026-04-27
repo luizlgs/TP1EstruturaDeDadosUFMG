@@ -192,7 +192,7 @@ int main(){
 
             //----------------------------------------------------------------------------------------------
 
-        case 81:{
+        case 81:{ //Q
             int id_consulta, id_cliente, num_acoes_retornadas, qtd_metricas;
             ss >> id_consulta >> id_cliente >> num_acoes_retornadas >> qtd_metricas;
 
